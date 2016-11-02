@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Lists example</title>
+
+    <!-- Photon.css -->
+    <link rel="stylesheet" href="../css/photon.css">
+
+    <style>
+      .sidebar {
+        background-color: #f5f5f4;
+      }
+      .welcome-box h2, .image-title {
+        text-align: center;
+      }
+      .welcome-box {
+        margin: 0 auto;
+        width:400px;
+      }
+      .main-password-box-register, .main-password-box-login, .welcome-title,.main-add-records-box, .sidebar, .main-view-record-box {
+        display: none;
+      }
+      .left {
+        float: left;
+      }
+      .image-title {
+        padding: 10px;
+      }
+      .main-view-record-box {
+        text-align: center;
+        margin-top: 100px;
+      }
+      .copy-area span {
+        cursor: pointer;
+      }
+      #data-record, .status-record {
+        font-size: 2em;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="window">
+      <!-- .toolbar-header sits at the top of your app -->
+      <header class="toolbar toolbar-header">
+        <h1 class="title">SSHControl</h1>
+        <div class="toolbar-actions">
+          <div class="btn-group">
+            <button class="btn btn-default" id="to-home">
+              <span class="icon icon-home"></span>
+            </button>
+          </div>
+
+          <button class="btn btn-default btn-dropdown pull-right">
+            <span class="icon icon-megaphone"></span>
+          </button>
+        </div>
+      </header>
+      <div class="window-content">
+        <div class="pane-group" id="main-box">
+
+          <div class="pane pane-sm sidebar">
+            <ul class="list-group">
+              <li class="list-group-header">
+                <input class="form-control" type="text" placeholder="Search for someone">
+              </li>
+              <div id="records">
+              </div>
+            </ul>
+          </div>
+          <div class="pane">
+            <div class="welcome-box">
+              <div class="image-title">
+                <img src="../img/laptop-ssh.png" width="180" />
+              </div>
+              <div class="main-password-box-register">
+                <hr />
+                <form id="form-set-main-password-register">
+                  <div class="form-group">
+                    <label>Typing main password</label>
+                    <input type="password" name="psswd_1" class="form-control" placeholder="">
+                  </div>
+                  <div class="form-group">
+                    <label>Typing main password again</label>
+                    <input type="password" name="psswd_2" class="form-control" placeholder="">
+                  </div>
+                  <button class="btn btn-mini btn-primary">Set</button>
+                </form>
+              </div>
+              <div class="main-password-box-login">
+                <hr />
+                <form id="form-set-main-password-login">
+                  <div class="form-group">
+                    <label>Typing main password</label>
+                    <input type="password" name="psswd" class="form-control" placeholder="">
+                  </div>
+                  <button class="btn btn-mini btn-primary">Login</button>
+                </form>
+              </div>
+              <div class="main-add-records-box">
+                <hr />
+                <form id="form-add-records-box">
+                  <div class="form-group">
+                    <label>Enter the name</label>
+                    <input type="text" class="form-control" name="name_record" placeholder="">
+                  </div>
+                  <div class="form-group">
+                    <label>Enter the login</label>
+                    <input type="text" class="form-control" name="login_record" placeholder="">
+                  </div>
+                  <div class="form-group">
+                    <label>Enter the ip</label>
+                    <input type="text" class="form-control" placeholder="" name="ip_record">
+                  </div>
+                  <div class="form-group">
+                    <label>Enter the password</label>
+                    <input type="password" class="form-control" placeholder="" name="psswd_record">
+                  </div>
+                  <div class="form-group">
+                    <label>Enter the port (if it differs from the default - 22)</label>
+                    <input type="number" class="form-control" placeholder="" name="port_record">
+                  </div>
+                  <button class="btn btn-default" type="submit">Add</button>
+                </form>
+              </div>
+              <div class="main-view-record-box">
+                <div id="view-record">
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- Insert this line above script imports  -->
+    <script>if (typeof module === 'object') {window.module = module; module = undefined;}</script>
+    <script src="./js/jquery-2.2.4.min.js"></script>
+    <!-- Insert this line after script imports -->
+    <script>if (window.module) module = window.module;</script>
+    <script type="text/javascript">
+      var handlebars = require('handlebars');
+      function check_records(ipcRenderer){
+        ipcRenderer.send('check_records', '');
+        ipcRenderer.once('check_records', function(event, arg) {
+          if(arg.error != 0){
+            new Notification('SSHControl', [{body:arg.message}][0])
+            return false;
+          }
+          $('.welcome-title').hide();
+          if(arg.records_count != 0){
+            $('.sidebar').show();
+            var source = $("#main-box-template").html();
+            var template = handlebars.compile(source);
+            var records = arg.records;
+            $('#records').html('');
+            $(records).each(function(){
+              $('#records').append(template({name:this.name,ip:this.ip,id:this._id}));
+            })
+            $('.view').click(function(){
+              $('.view').removeClass('active');
+              $(this).addClass('active');
+              $('.main-add-records-box').hide();
+              var id = $(this).attr('id');
+              ipcRenderer.send('get_record', id);
+              ipcRenderer.once('get_record', function(event, arg) {
+                var source = $("#view-box-template").html();
+                var template = handlebars.compile(source);
+                var record = arg.record;
+                $('#view-record').html('');
+                $('.main-view-record-box').show();
+                if(null === record.port){
+                  record.port = 22;
+                }
+                $('#view-record').append(template({name:record.name,ip:record.ip,id:record._id,port:record.port,password:record.password,login:record.login}));
+                $("input#ssh-data").on("click", function () {
+                   $(this).select();
+                });
+                $("input#ssh-password").on("click", function () {
+                   $(this).select();
+                });
+              });
+              return false;
+            })
+          }
+        });
+      }
+      $(document).ready(function(){
+        var path = require('path');
+        var ipcRenderer = require('electron').ipcRenderer;
+        var remote = require('electron').remote;
+        var Menu = remote.Menu;
+        var InputMenu = Menu.buildFromTemplate([{
+                label: 'Undo',
+                role: 'undo',
+            }, {
+                label: 'Redo',
+                role: 'redo',
+            }, {
+                type: 'separator',
+            }, {
+                label: 'Cut',
+                role: 'cut',
+            }, {
+                label: 'Copy',
+                role: 'copy',
+            }, {
+                label: 'Paste',
+                role: 'paste',
+            }, {
+                type: 'separator',
+            }, {
+                label: 'Select all',
+                role: 'selectall',
+            },
+        ]);
+        document.body.addEventListener('contextmenu', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            var node = e.target;
+
+            while (node) {
+                if (node.nodeName.match(/^(input|textarea)$/i) || node.isContentEditable) {
+                    InputMenu.popup(remote.getCurrentWindow());
+                    break;
+                }
+                node = node.parentNode;
+            }
+        });
+        ipcRenderer.send('check_user', '');
+        ipcRenderer.once('check_user', function(event, arg) {
+          console.log(arg)
+          if(arg.main_password === false){
+            $('.main-password-box-register').show();
+            return false;
+          } else {
+            $('.main-password-box-login').show();
+            return false;
+          }
+        });
+
+        $('form#form-add-records-box').submit(function(){
+          var serialize = require('form-serialize');
+          var form = serialize(this, { hash: true });
+          ipcRenderer.send('add_records', form);
+          ipcRenderer.once('add_records', function(event, arg) {
+
+            if(arg.error != 0){
+              new Notification('SSHControl', [{body:arg.message}][0]);
+              return false;
+            }
+            $('form#form-add-records-box')[0].reset();
+            // new Notification('SSHControl', [{body:arg.message}][0]);
+            check_records(ipcRenderer);
+            // get_record(ipcRenderer);
+            return false;
+          });
+          return false;
+        });
+        $('form#form-set-main-password-register').submit(function(){
+          var serialize = require('form-serialize');
+          var form = serialize(this, { hash: true });
+          ipcRenderer.send('set_main_password', form);
+          ipcRenderer.once('set_main_password', function(event, arg) {
+            $('.image-title').hide();
+            $('.main-password-box-register').hide();
+            $('.main-add-records-box').show();
+          });
+          return false;
+        });
+        $('form#form-set-main-password-login').submit(function(){
+          var serialize = require('form-serialize');
+          var form = serialize(this, { hash: true });
+          ipcRenderer.send('login_main', form);
+          ipcRenderer.once('login_main', function(event, arg) {
+            if(arg.error != 0){
+              new Notification('SSHControl', [{body:arg.message}][0]);
+              return false;
+            }
+            $('.image-title').hide();
+            $('.main-password-box-login').hide();
+            $('.main-add-records-box').show();
+            check_records(ipcRenderer);
+            // get_record(ipcRenderer);
+          });
+          return false;
+        });
+        $('#to-home').on('click', function(){
+          $('#view-record').html('');
+          $('.main-add-records-box').show();
+          $('.view').removeClass('active');
+          return false;
+        });
+      });
+    </script>
+    <!-- templates -->
+    <script id="main-box-template" type="text/x-handlebars-template">
+      <li class="list-group-item view" id="{{id}}">
+        <img class="img-circle media-object pull-left" src="../img/Utilities-Terminal-icon.png" width="32" height="32">
+        <div class="media-body">
+          <strong>{{name}}</strong>
+          <p>{{ip}}</p>
+        </div>
+      </li>
+    </script>
+    <script id="view-box-template" type="text/x-handlebars-template">
+      <span class="icon icon-record status-record" style="color:#57acf5"></span>  <span id="data-record">{{name}}</span>
+      <div class="copy-area">
+        <form>
+          <div class="form-group">
+            <label>Copy data ssh</label>
+            <input type="text" class="form-control" id="ssh-data" placeholder="" value="ssh {{login}}@{{ip}} -p {{port}}"/>
+          </div>
+          <div class="form-group">
+            <label>Copy password ssh</label>
+            <input type="text" class="form-control" id="ssh-password" name="name_record" value="{{password}}"/>
+          </div>
+        </form>
+      </div>
+    </script>
+    
+  </body>
+</html>
