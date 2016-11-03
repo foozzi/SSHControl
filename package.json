@@ -1,8 +1,8 @@
 {
   "name": "SSHControl",
-  "main"    : "./dist/template-app/app.js",
-  "description":"Manage your openssh acces in local db (Dexie)",
-  "version": "0.0.1",
+  "main"    : "./dist/template-app/bootstrap.js",
+  "description":"Manage your openssh acces in local db (linvodb3)",
+  "version": "0.0.2",
   "author": "Tkachenko Igor",
   "keywords": [
     "ssh",
@@ -17,7 +17,7 @@
     "url": ""
   },
   "scripts": {
-    "start": "electron-rebuild && electron dist/template-app"
+    "start": "electron-rebuild && electron dist/template-app/bootstrap.js"
   },
   "style": "dist/css/photon.css",
   "license": "GNU",
@@ -41,7 +41,9 @@
     "form-serialize":"0.7.1",
     "handlebars":"4.0.5",
     "path":"0.12.7",
-    "menu":"0.2.5"
+    "menu":"0.2.5",
+    "coffee-script":"1.11.1",
+    "jquery":"3.1.1"
   }
 
 }
