@@ -26,18 +26,18 @@ init os.homedir() + '/.sshcontroll', ->
   return
 # owner model
 Owner = new LinvoDB('owner', {})
-# 
+#
 # records model
 Records = new LinvoDB('records', {})
-# 
+#
 mainWindow = null
 # Quit when all windows are closed.
 app.on 'window-all-closed', ->
   # On OS X it is common for applications and their menu bar
   # to stay active until the user quits explicitly with Cmd + Q
-  if process.platform != 'darwin'
+  # if process.platform != 'darwin'
     app.quit()
-  return
+  # return
 # This method will be called when Electron has finished
 # initialization and is ready to create browser windows.
 app.on 'ready', ->
@@ -46,32 +46,32 @@ app.on 'ready', ->
   ValidateIPaddress = (ip, cb) ->
     if /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/.test(ip)
       return cb(true)
-    cb false
+    return cb false
 
   add_record = (datas, cb) ->
     if typeof datas.name_record == 'undefined'
-      return cb(null,
+      return cb(
         error: 1
-        message: 'Name is required')
+        message: 'Name is required', null)
     else if typeof datas.ip_record == ' undefined'
-      return cb(null,
+      return cb(
         error: 1
-        message: 'IP is required')
+        message: 'IP is required', null)
     else if typeof datas.psswd_record == 'undefined'
-      return cb(null,
+      return cb(
         error: 1
-        message: 'Password is required')
+        message: 'Password is required', null)
     else if typeof datas.login_record == 'undefined'
-      return cb(null,
+      return cb(
         error: 1
-        message: 'Login is required')
+        message: 'Login is required', null)
     name = xss(datas.name_record)
     login = xss(datas.login_record)
     ValidateIPaddress datas.ip_record, (response) ->
       if !response
-        return cb(null,
+        return cb(
           error: 1
-          message: 'IP is not valid IPV4')
+          message: 'IP is not valid IPV4', null)
       return
     ip = xss(datas.ip_record)
     password = datas.psswd_record
@@ -79,11 +79,11 @@ app.on 'ready', ->
     login = datas.login_record
     if typeof datas.port_record != 'undefined'
       if isNaN(datas.port_record)
-        return cb(null,
+        return cb(
           error: 1
-          message: 'Port must be a number')
+          message: 'Port must be a number', null)
       port = datas.port_record
-    data = 
+    data =
       name: name
       login: login
       ip: ip
@@ -96,7 +96,7 @@ app.on 'ready', ->
       cb err, null
     return
 
-  # @TODO add count and offset 
+  # @TODO add count and offset
 
   get_record = (cb) ->
     # if(isNaN(count)){
@@ -229,7 +229,7 @@ app.on 'ready', ->
   mainWindow.loadURL 'file://' + __dirname + '/index.html'
   # mainWindow.webContents.openDevTools();
   # Open the DevTools.
-  # mainWindow.openDevTools()
+  mainWindow.openDevTools()
   # Emitted when the window is closed.
   mainWindow.on 'closed', ->
     # Dereference the window object, usually you would store windows
